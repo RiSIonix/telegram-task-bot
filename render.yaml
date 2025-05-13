@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: telegram-task-bot
+    env: python
+    buildCommand: ""
+    startCommand: gunicorn app:app
+    autoDeploy: true
+    envVars:
+      - key: BOT_TOKEN
+        value: 7887871895:AAFwajIsJwg6cub1R5QQqEFh7lpktwRp7Pg
