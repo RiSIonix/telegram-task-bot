@@ -150,6 +150,6 @@ def posalji_info(chat_id, tekst):
     })
 # Pokretanje Flask servera
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Render dodeljuje PORT
+    port = int(os.environ.get("PORT", 5000))  # Render dodeljuje PORT
     app.run(host="0.0.0.0", port=port)
 
