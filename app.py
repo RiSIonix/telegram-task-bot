@@ -1,15 +1,17 @@
 from flask import Flask, request
 import requests
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 app = Flask(__name__)
 
-BOT_TOKEN = '7887871895:AAFwajIsJwg6cub1R5QQqEFh7lpktwRp7Pg'
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 TELEGRAM_API_URL = f'https://api.telegram.org/bot{BOT_TOKEN}'
 ZADATAK_STATUSI = {}  # {status_msg_id: {'zad_msg_id': ..., 'preuzeo': ..., 'zavrseno': ...}}
 
-# Funkcija za slanje poruke sa zadatkom i inline dugmadima
 def posalji_zadatak(chat_id, tekst_zadatka):
-    # 1. Pošalji originalnu poruku sa zadatkom
     r1 = requests.post(f'{TELEGRAM_API_URL}/sendMessage', json={
         'chat_id': chat_id,
         'text': f'📋 ZADATAK:\n\n{tekst_zadatka}',
@@ -22,7 +24,6 @@ def posalji_zadatak(chat_id, tekst_zadatka):
 
     original_msg_id = r1.json()['result']['message_id']
 
-    # 2. Pošalji status poruku sa inline dugmadima
     r2 = requests.post(f'{TELEGRAM_API_URL}/sendMessage', json={
         'chat_id': chat_id,
         'text': '👤 Status: ⏳ Čeka preuzimanje...',
@@ -38,7 +39,6 @@ def posalji_zadatak(chat_id, tekst_zadatka):
     if r2.status_code == 200:
         status_msg_id = r2.json()['result']['message_id']
 
-        # Zameni "ID" u dugmadima sa pravim ID-om
         keyboard = {
             'inline_keyboard': [
                 [{'text': '✅ Preuzeo zadatak', 'callback_data': f'preuzeo:{status_msg_id}'}],
@@ -46,14 +46,12 @@ def posalji_zadatak(chat_id, tekst_zadatka):
             ]
         }
 
-        # Edituj status poruku sa pravim dugmadima
         requests.post(f'{TELEGRAM_API_URL}/editMessageReplyMarkup', json={
             'chat_id': chat_id,
             'message_id': status_msg_id,
             'reply_markup': keyboard
         })
 
-        # Zapamti status
         ZADATAK_STATUSI[status_msg_id] = {
             'zad_msg_id': original_msg_id,
             'preuzeo': None,
@@ -63,7 +61,6 @@ def posalji_zadatak(chat_id, tekst_zadatka):
     else:
         print("❌ Greška pri slanju status poruke:", r2.text)
 
-# Webhook endpoint
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.json
@@ -74,7 +71,6 @@ def webhook():
         chat_id = message["chat"]["id"]
         tekst_poruke = message["text"]
 
-        # Poslati zadatak sa dugmićima
         posalji_zadatak(chat_id, tekst_poruke)
         return 'OK', 200
 
@@ -114,7 +110,6 @@ def webhook():
                 izmeni_status(chat_id, status_msg_id, novi_tekst, disable_buttons=True)
                 posalji_info(chat_id, f"{korisnik} je označio zadatak kao završen.")
 
-        # Obavezno potvrdi callback
         requests.post(f'{TELEGRAM_API_URL}/answerCallbackQuery', json={
             'callback_query_id': callback["id"]
         })
@@ -123,7 +118,6 @@ def webhook():
 
     return 'No message or callback', 200
 
-# Funkcija za izmenu teksta status poruke
 def izmeni_status(chat_id, message_id, novi_tekst, disable_buttons=False):
     keyboard = None
     if not disable_buttons:
@@ -142,14 +136,12 @@ def izmeni_status(chat_id, message_id, novi_tekst, disable_buttons=False):
         'reply_markup': keyboard
     })
 
-# Funkcija za slanje informacije u grupu
 def posalji_info(chat_id, tekst):
     requests.post(f"{TELEGRAM_API_URL}/sendMessage", json={
         "chat_id": chat_id,
         "text": tekst
     })
-# Pokretanje Flask servera
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Render dodeljuje PORT
-    app.run(host="0.0.0.0", port=port)
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
