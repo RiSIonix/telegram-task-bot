@@ -3,7 +3,8 @@ import requests
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Učitaj promenljive iz kod.env
+load_dotenv(dotenv_path='kod.env')
 
 app = Flask(__name__)
 
@@ -70,7 +71,6 @@ def webhook():
         message = data["message"]
         chat_id = message["chat"]["id"]
         tekst_poruke = message["text"]
-
         posalji_zadatak(chat_id, tekst_poruke)
         return 'OK', 200
 
