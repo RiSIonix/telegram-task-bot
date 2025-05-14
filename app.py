@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 # Učitaj promenljive iz kod.env
-load_dotenv(dotenv_path='kod.env')
+load_dotenv(dotenv_path='KOD.env')
 
 app = Flask(__name__)
 
